@@ -6,8 +6,6 @@ def vista_menu(page):
     menu_items = [
         ft.PopupMenuItem(text="Dashboard", on_click=lambda e: page.go("/")),
         ft.PopupMenuItem(text="Configuraciones", on_click=lambda e: page.go("/configuraciones")),
-        ft.PopupMenuItem(text="Clientes", on_click=lambda e: page.go("/clientes")),
-        ft.PopupMenuItem(text="Productos", on_click=lambda e: page.go("/productos")),
     ]
 
     # Crea el menú desplegable
