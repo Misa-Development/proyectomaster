@@ -13,10 +13,18 @@ color_tematica = configuracion.get("color_tematica", "#FFFFFF")
 color_letras = configuracion.get("color_letras", "#000000")
 
 def vista_dashboard(page):
+    # Leer configuración actualizada de config.json
+    with open("config.json", "r") as config_file:
+        configuracion = json.load(config_file)
+
+    # Configura los colores del fondo y las letras
+    color_fondo = configuracion.get("color_fondo", "#FFFFFF")
+    color_letras = configuracion.get("color_letras", "#000000")
+
     # Aplicar color de fondo
     page.bgcolor = color_fondo
     page.window_maximized = True
-
+    
     # Crear una instancia de diálogo global
     detalles_cliente_dialog = ft.AlertDialog(
         modal=True,  # Asegura comportamiento de ventana emergente

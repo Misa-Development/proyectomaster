@@ -1,7 +1,6 @@
 import flet as ft
 from views.dashboard import vista_dashboard
 from views.configuraciones import vista_configuraciones
-from views.Productos import vista_productos
 
 def main(page):
     page.title = "Gestor de Gimnasio"
@@ -14,8 +13,6 @@ def main(page):
         page.controls.clear()
         if route == "/configuraciones":
             vista_configuraciones(page)
-        elif route == "/productos":
-            vista_productos(page)
         else:  # Default to dashboard
             vista_dashboard(page)
         page.update()
