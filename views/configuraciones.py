@@ -36,18 +36,53 @@ def guardar_configuracion(config):
 
 # Función para abrir una paleta de colores RGB
 def abrir_paleta_color(page, titulo, campo_color, key):
+    # Obtener valores iniciales del color actual
+    color_actual = campo_color.value
+    r, g, b = (0, 0, 0)  # Valores predeterminados si no hay color previo
+    if color_actual.startswith("rgb"):
+        # Extraer valores RGB del formato "rgb(r, g, b)"
+        r, g, b = map(int, color_actual[4:-1].split(","))
+
+    # Sliders para la paleta de colores RGB
+    red_slider = ft.Slider(min=0, max=255, divisions=255, value=r, label=f"Rojo: {r}")
+    green_slider = ft.Slider(min=0, max=255, divisions=255, value=g, label=f"Verde: {g}")
+    blue_slider = ft.Slider(min=0, max=255, divisions=255, value=b, label=f"Azul: {b}")
+    
+    # Actualizar dinámicamente el ejemplo de color
+    color_ejemplo = ft.Container(
+        width=50,
+        height=50,
+        bgcolor=f"rgb({r},{g},{b})",
+        border_radius=5
+    )
+
+    def actualizar_color_ejemplo(e):
+        nuevo_color = f"rgb({int(red_slider.value)},{int(green_slider.value)},{int(blue_slider.value)})"
+        color_ejemplo.bgcolor = nuevo_color
+        campo_color.value = nuevo_color  # Actualiza el campo dinámicamente
+        configuracion[key] = nuevo_color  # Actualiza la configuración
+        red_slider.label = f"Rojo: {int(red_slider.value)}"
+        green_slider.label = f"Verde: {int(green_slider.value)}"
+        blue_slider.label = f"Azul: {int(blue_slider.value)}"
+        
+        # Aplica cambios instantáneamente si es color de letras
+        if key == "color_letras":
+            actualizar_tematica(page)
+        
+        page.update()
+
+    red_slider.on_change = actualizar_color_ejemplo
+    green_slider.on_change = actualizar_color_ejemplo
+    blue_slider.on_change = actualizar_color_ejemplo
+
+    # Guardar el color seleccionado
     def guardar_color(e):
-        nuevo_color = f"rgb({red_slider.value},{green_slider.value},{blue_slider.value})"
+        nuevo_color = f"rgb({int(red_slider.value)},{int(green_slider.value)},{int(blue_slider.value)})"
         campo_color.value = nuevo_color
         configuracion[key] = nuevo_color  # Actualizar configuración
         guardar_configuracion(configuracion)  # Guardar cambios en config.json
         page.dialog.open = False
         page.update()
-
-    # Sliders para la paleta de colores RGB
-    red_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Rojo")
-    green_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Verde")
-    blue_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Azul")
 
     # Diálogo para la paleta de colores
     dialog = ft.AlertDialog(
@@ -55,7 +90,8 @@ def abrir_paleta_color(page, titulo, campo_color, key):
         content=ft.Column([
             red_slider,
             green_slider,
-            blue_slider
+            blue_slider,
+            ft.Row([ft.Text("Color Actual:"), color_ejemplo])  # Mostrar color actual
         ], spacing=10),
         actions=[
             ft.TextButton("Guardar", on_click=guardar_color),
@@ -96,7 +132,6 @@ def cambiar_idioma(page):
     page.snack_bar = ft.SnackBar(ft.Text(f"Idioma cambiado a '{nuevo_idioma}'"))
     page.snack_bar.open = True
     page.update()
-
 # Vista principal
 def vista_configuraciones(page):
     page.title = "Configuraciones"
