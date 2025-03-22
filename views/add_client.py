@@ -1,56 +1,79 @@
 import flet as ft
 import calendar
 import datetime
+import json
 
+# Ruta del archivo de configuración
+CONFIG_FILE = "config.json"
+
+# Leer configuración desde archivo
+def cargar_configuracion():
+    try:
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    except FileNotFoundError:
+        config = {
+            "color_fondo": "#FFFFFF",
+            "color_tematica": "#E8E8E8",
+            "color_letras": "#000000",
+            "tema": "Light",
+            "nombre_gimnasio": "Mi Gimnasio",
+            "idioma": "Español"
+        }
+        guardar_configuracion(config)
+        return config
+
+# Guardar configuración en archivo
+def guardar_configuracion(config):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f, indent=4)
+
+# Modal personalizado para seleccionar fechas
 def open_custom_date_picker_modal(page, initial_date, on_date_selected):
-    # Usar hoy si no se proporciona fecha inicial
+    configuracion = cargar_configuracion()
+
     if initial_date is None:
         initial_date = datetime.date.today()
-    # Usar un diccionario mutable para almacenar el estado (año y mes actuales)
     state = {"year": initial_date.year, "month": initial_date.month}
-    
+
     modal_container = ft.Container(
-        content=ft.Text(""),  # se actualizará
+        content=ft.Text(""),
         padding=10,
-        bgcolor=ft.colors.WHITE,
+        bgcolor=configuracion["color_tematica"],
         border_radius=ft.BorderRadius(10, 10, 10, 10),
-        width=350,  # mayor ancho
-        height=400,  # mayor alto para incluir controles
+        width=350,
+        height=400,
     )
-    
-    # Función que genera la rejilla del calendario para un año y mes
+
     def build_calendar(year, month):
         month_matrix = calendar.monthcalendar(year, month)
         rows = []
-        # Encabezado con nombres de días
         days_header = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
         header_row = ft.Row(
-            [ft.Text(day, weight="bold", width=40, text_align=ft.TextAlign.CENTER)
+            [ft.Text(day, weight="bold", width=40, text_align=ft.TextAlign.CENTER, color=configuracion["color_letras"])
              for day in days_header],
             alignment=ft.MainAxisAlignment.CENTER
         )
         rows.append(header_row)
-        # Filas por cada semana
+
         for week in month_matrix:
             btns = []
             for day in week:
                 if day == 0:
                     btns.append(ft.Text(" ", width=40))
                 else:
-                    # Capturamos el valor de day para la lambda
                     d = datetime.date(year, month, day)
                     btn = ft.TextButton(
                         text=str(day),
                         width=40,
-                        on_click=lambda e, d=d: on_date_selected(d)
+                        on_click=lambda e, d=d: on_date_selected(d),
+                        style=ft.ButtonStyle(bgcolor=configuracion["color_tematica"], color=configuracion["color_letras"])
                     )
                     btns.append(btn)
             rows.append(ft.Row(btns, alignment=ft.MainAxisAlignment.CENTER))
         return ft.Column(rows, spacing=2)
-    
-    # Función para reconstruir el contenido del modal con controles de navegación
+
     def rebuild_modal():
-        # Controles para navegar en el año
         def prev_year(e):
             state["year"] -= 1
             rebuild_modal()
@@ -60,12 +83,12 @@ def open_custom_date_picker_modal(page, initial_date, on_date_selected):
         year_row = ft.Row(
             [
                 ft.IconButton(icon=ft.icons.ARROW_LEFT, tooltip="Año anterior", on_click=prev_year),
-                ft.Text(str(state["year"]), size=18, weight="bold"),
+                ft.Text(str(state["year"]), size=18, weight="bold", color=configuracion["color_letras"]),
                 ft.IconButton(icon=ft.icons.ARROW_RIGHT, tooltip="Año siguiente", on_click=next_year),
             ],
             alignment=ft.MainAxisAlignment.CENTER
         )
-        # Controles para navegar en el mes
+
         def prev_month(e):
             if state["month"] == 1:
                 state["month"] = 12
@@ -83,67 +106,93 @@ def open_custom_date_picker_modal(page, initial_date, on_date_selected):
         month_row = ft.Row(
             [
                 ft.IconButton(icon=ft.icons.ARROW_LEFT, tooltip="Mes anterior", on_click=prev_month),
-                ft.Text(calendar.month_name[state["month"]], size=18, weight="bold"),
+                ft.Text(calendar.month_name[state["month"]], size=18, weight="bold", color=configuracion["color_letras"]),
                 ft.IconButton(icon=ft.icons.ARROW_RIGHT, tooltip="Mes siguiente", on_click=next_month),
             ],
             alignment=ft.MainAxisAlignment.CENTER
         )
-        # Rejilla del calendario
+
         calendar_grid = build_calendar(state["year"], state["month"])
-        # Botón "Cancelar" para cerrar el modal
+
         def close_modal(e):
             if overlay in page.overlay:
                 page.overlay.remove(overlay)
             page.update()
         cancel_row = ft.Row(
-            [ft.TextButton("Cancelar", on_click=close_modal)],
+            [ft.TextButton("Cancelar", on_click=close_modal, style=ft.ButtonStyle(color=configuracion["color_letras"]))],
             alignment=ft.MainAxisAlignment.END
         )
-        # Actualizar el contenido del contenedor modal
+
         modal_container.content = ft.Column(
-            [
-                year_row,
-                month_row,
-                calendar_grid,
-                cancel_row
-            ],
+            [year_row, month_row, calendar_grid, cancel_row],
             spacing=10
         )
         page.update()
-    
+
     rebuild_modal()
-    
+
     overlay = ft.Container(
-         content=modal_container,
-         alignment=ft.alignment.center,
-         expand=True,
-         bgcolor=ft.colors.BLACK38,
+        content=modal_container,
+        alignment=ft.alignment.center,
+        expand=True,
+        bgcolor=ft.colors.BLACK38,
     )
     return overlay
 
+# Vista agregar cliente
 def vista_add_client(page):
+    configuracion = cargar_configuracion()
+
     page.title = "Agregar Cliente"
     page.window_maximized = True
-    page.bgcolor = "#111111"
+    page.bgcolor = configuracion["color_fondo"]
 
-    # Botón "Volver" para regresar al dashboard
     def regresar_dashboard(e):
         page.clean()
-        from views.dashboard import vista_dashboard  # Verifica la ruta
+        from views.dashboard import vista_dashboard
         vista_dashboard(page)
         page.update()
+
     btn_volver = ft.IconButton(
         icon=ft.icons.ARROW_BACK,
         tooltip="Volver al Dashboard",
-        on_click=regresar_dashboard
+        on_click=regresar_dashboard,
+        style=ft.ButtonStyle(bgcolor=configuracion["color_tematica"], color=configuracion["color_letras"])
     )
 
-    # Campos de entrada
-    txt_name = ft.TextField(label="Nombre")
-    txt_surname = ft.TextField(label="Apellido")
-    txt_dni = ft.TextField(label="N° Documento", keyboard_type=ft.KeyboardType.NUMBER)
-    txt_age = ft.TextField(label="Edad", keyboard_type=ft.KeyboardType.NUMBER)
-    txt_email = ft.TextField(label="Email", keyboard_type=ft.KeyboardType.EMAIL)
+    txt_name = ft.TextField(
+        label="Nombre",
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    txt_surname = ft.TextField(
+        label="Apellido",
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    txt_dni = ft.TextField(
+        label="N° Documento",
+        keyboard_type=ft.KeyboardType.NUMBER,
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    txt_age = ft.TextField(
+        label="Edad",
+        keyboard_type=ft.KeyboardType.NUMBER,
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    txt_email = ft.TextField(
+        label="Email",
+        keyboard_type=ft.KeyboardType.EMAIL,
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
     dropdown_gender = ft.Dropdown(
         label="Seleccione el Sexo",
         options=[
@@ -151,35 +200,67 @@ def vista_add_client(page):
             ft.dropdown.Option(key="Female", text="Femenino"),
             ft.dropdown.Option(key="Other", text="Otro"),
         ],
-        value=""
+        value="",
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
     )
-    txt_diseases = ft.TextField(label="Enfermedades")
-    switch_medical = ft.Switch(label="Apta Médica", value=False)
-    
-    # Para la fecha, usamos TextField de solo lectura y un botón para el calendario personalizado
-    txt_membership_start = ft.TextField(label="Inicio de Membresía", read_only=True)
-    btn_pick_start = ft.IconButton(
-        icon=ft.icons.CALENDAR_MONTH,
-        tooltip="Seleccionar Fecha",
-        on_click=lambda e: show_date_picker(txt_membership_start)
+    txt_diseases = ft.TextField(
+        label="Enfermedades",
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
     )
-    txt_membership_end = ft.TextField(label="Vencimiento de Membresía", read_only=True)
-    btn_pick_end = ft.IconButton(
-        icon=ft.icons.CALENDAR_MONTH,
-        tooltip="Seleccionar Fecha",
-        on_click=lambda e: show_date_picker(txt_membership_end)
+    switch_medical = ft.Switch(
+    label="Apta Médica",
+    value=False,
+    active_color=configuracion["color_tematica"]
     )
-    
+
     def show_date_picker(text_field):
         def on_date_selected(selected_date):
             text_field.value = selected_date.strftime("%d/%m/%Y")
             if overlay in page.overlay:
                 page.overlay.remove(overlay)
             page.update()
+
         overlay = open_custom_date_picker_modal(page, None, on_date_selected)
         page.overlay.append(overlay)
         page.update()
-    
+
+    txt_membership_start = ft.TextField(
+        label="Inicio de Membresía",
+        read_only=True,
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    btn_pick_start = ft.IconButton(
+        icon=ft.icons.CALENDAR_MONTH,
+        tooltip="Seleccionar Fecha",
+        on_click=lambda e: show_date_picker(txt_membership_start),
+        style=ft.ButtonStyle(
+            bgcolor=configuracion["color_tematica"],
+            color=configuracion["color_letras"]
+        )
+    )
+    txt_membership_end = ft.TextField(
+        label="Vencimiento de Membresía",
+        read_only=True,
+        text_style=ft.TextStyle(color=configuracion["color_letras"]),
+        border_color=configuracion["color_letras"],
+        bgcolor=configuracion["color_tematica"]
+    )
+    btn_pick_end = ft.IconButton(
+        icon=ft.icons.CALENDAR_MONTH,
+        tooltip="Seleccionar Fecha",
+        on_click=lambda e: show_date_picker(txt_membership_end),
+        style=ft.ButtonStyle(
+            bgcolor=configuracion["color_tematica"],
+            color=configuracion["color_letras"]
+        )
+    )
+
     def submit_client(e):
         client_data = {
             "name": txt_name.value,
@@ -206,23 +287,22 @@ def vista_add_client(page):
         txt_membership_start.value = ""
         txt_membership_end.value = ""
         page.update()
-    
+
     btn_submit = ft.ElevatedButton(
         text="Agregar Cliente",
         on_click=submit_client,
         style=ft.ButtonStyle(
-            bgcolor=ft.colors.YELLOW,
-            color=ft.colors.BLACK,
-            padding=10
+            bgcolor=configuracion["color_tematica"],
+            color=configuracion["color_letras"]
         )
     )
-    
+
     membership_start_row = ft.Row([txt_membership_start, btn_pick_start], spacing=5)
     membership_end_row = ft.Row([txt_membership_end, btn_pick_end], spacing=5)
-    
+
     form = ft.Column(
         [
-            ft.Text("Agregar Cliente", size=32, weight="bold", color="#e49d1a"),
+            ft.Text("Agregar Cliente", size=32, weight="bold", color=configuracion["color_letras"]),
             txt_name,
             txt_surname,
             ft.Row([txt_dni, txt_age], spacing=10),
@@ -238,17 +318,17 @@ def vista_add_client(page):
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=10
     )
-    
+
     container = ft.Container(
         content=form,
         alignment=ft.alignment.center,
         padding=20,
-        bgcolor="#111111",
+        bgcolor=configuracion["color_fondo"],
         border_radius=ft.BorderRadius(10, 10, 10, 10),
         width=500,
         height=800,
     )
-    
+
     scrollable_layout = ft.ListView(
         expand=True,
         spacing=10,
@@ -257,7 +337,7 @@ def vista_add_client(page):
             container
         ]
     )
-    
+
     page.add(scrollable_layout)
     page.update()
 
