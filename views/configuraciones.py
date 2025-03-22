@@ -1,6 +1,6 @@
 import flet as ft
 import json
-from tematica import actualizar_tematica, setear_colores
+from tematica import setear_colores
 from views.Menu import vista_menu
 
 # Ruta del archivo de configuración
@@ -15,18 +15,27 @@ def cargar_configuracion():
         # Configuración predeterminada si el archivo no existe
         config = {
             "color_fondo": "#FFFFFF",
-            "color_tematica": "#000000",
+            "color_tematica": "#E8E8E8",
             "color_letras": "#000000",
+            "tema": "Light",  # Tema por defecto
             "nombre_gimnasio": "Mi Gimnasio",
-            "idioma": "Español (es)"
+            "idioma": "Español"
         }
+        guardar_configuracion(config)  # Crear archivo con valores predeterminados
+        return config
 
-    # Asegurar que todas las claves necesarias estén presentes
-    config.setdefault("color_fondo", "#FFFFFF")
-    config.setdefault("color_tematica", "#000000")
-    config.setdefault("color_letras", "#000000")
-    config.setdefault("nombre_gimnasio", "Mi Gimnasio")
-    config.setdefault("idioma", "Español (es)")
+    # Verificar claves necesarias y completarlas si faltan
+    claves_necesarias = {
+        "color_fondo": "#FFFFFF",
+        "color_tematica": "#E8E8E8",
+        "color_letras": "#000000",
+        "tema": "Light",
+        "nombre_gimnasio": "Mi Gimnasio",
+        "idioma": "Español"
+    }
+    for clave, valor_defecto in claves_necesarias.items():
+        if clave not in config:
+            config[clave] = valor_defecto
     return config
 
 # Guardar configuración en archivo
@@ -34,197 +43,184 @@ def guardar_configuracion(config):
     with open(CONFIG_FILE, "w") as f:
         json.dump(config, f, indent=4)
 
-# Función para abrir una paleta de colores RGB
-def abrir_paleta_color(page, titulo, campo_color, key):
-    def guardar_color(e):
-        nuevo_color = f"rgb({red_slider.value},{green_slider.value},{blue_slider.value})"
-        campo_color.value = nuevo_color
-        configuracion[key] = nuevo_color  # Actualizar configuración
-        guardar_configuracion(configuracion)  # Guardar cambios en config.json
-        page.dialog.open = False
-        page.update()
+# Función para aplicar el tema
+def aplicar_tema(page, configuracion):
+    tema = configuracion["tema"]
+    if tema == "Light":  # Tema claro
+        configuracion["color_fondo"] = "#FFFFFF"
+        configuracion["color_tematica"] = "#D3D3D3"
+        configuracion["color_letras"] = "#000000"
+    elif tema == "Dark":  # Tema oscuro
+        configuracion["color_fondo"] = "#000000"
+        configuracion["color_tematica"] = "#303030"
+        configuracion["color_letras"] = "#FFFFFF"
 
-    # Sliders para la paleta de colores RGB
-    red_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Rojo")
-    green_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Verde")
-    blue_slider = ft.Slider(min=0, max=255, divisions=255, value=0, label="Azul")
-
-    # Diálogo para la paleta de colores
-    dialog = ft.AlertDialog(
-        title=ft.Text(titulo, weight="bold"),
-        content=ft.Column([
-            red_slider,
-            green_slider,
-            blue_slider
-        ], spacing=10),
-        actions=[
-            ft.TextButton("Guardar", on_click=guardar_color),
-            ft.TextButton("Cancelar", on_click=lambda e: setattr(dialog, "open", False))
-        ],
-        modal=True
+    # Aplicar los colores sincronizados
+    setear_colores(
+        page,
+        configuracion["color_fondo"],
+        configuracion["color_tematica"],
+        configuracion["color_letras"]
     )
-    page.dialog = dialog
-    dialog.open = True
+    guardar_configuracion(configuracion)  # Guardar los cambios
+    page.bgcolor = configuracion["color_fondo"]
     page.update()
 
-# Función para cambiar colores en general
-def cambiar_colores(page):
-    setear_colores(campo_color_fondo.value, campo_color_tematica.value, campo_color_letras.value)
-    configuracion["color_fondo"] = campo_color_fondo.value
-    configuracion["color_tematica"] = campo_color_tematica.value
-    configuracion["color_letras"] = campo_color_letras.value
-    guardar_configuracion(configuracion)
-    actualizar_tematica(page)
-    page.snack_bar = ft.SnackBar(ft.Text("¡Colores actualizados correctamente!"))
-    page.snack_bar.open = True
-    page.update()
-
-# Función para cambiar el nombre del gimnasio
-def cambiar_nombre_gimnasio(page):
-    nuevo_nombre = campo_nombre_gimnasio.value
-    configuracion["nombre_gimnasio"] = nuevo_nombre
-    guardar_configuracion(configuracion)
-    page.snack_bar = ft.SnackBar(ft.Text("¡Nombre del gimnasio actualizado correctamente!"))
-    page.snack_bar.open = True
-    page.update()
-
-# Función para cambiar el idioma
-def cambiar_idioma(page):
-    nuevo_idioma = selector_idioma.value
-    configuracion["idioma"] = nuevo_idioma
-    guardar_configuracion(configuracion)
-    page.snack_bar = ft.SnackBar(ft.Text(f"Idioma cambiado a '{nuevo_idioma}'"))
-    page.snack_bar.open = True
-    page.update()
-
-# Vista principal
+# Función principal de la vista de configuraciones
 def vista_configuraciones(page):
-    page.title = "Configuraciones"
-    page.window_maximized = True
+    configuracion = cargar_configuracion()  # Cargar configuración desde archivo
+    aplicar_tema(page, configuracion)  # Aplicar el tema al cargar
 
-    titulo = ft.Text(
-        "Configuraciones",
-        style="displaySmall",
-        color=configuracion["color_letras"],
-        weight=ft.FontWeight.BOLD,
-        text_align=ft.TextAlign.CENTER
-    )
+    def reconstruir_vista():
+        # Crear título con color dinámico
+        titulo = ft.Text(
+            "Configuraciones",
+            style="displaySmall",
+            color=configuracion["color_letras"],
+            weight=ft.FontWeight.BOLD,
+            text_align=ft.TextAlign.CENTER
+        )
 
-    # Menú horizontal en la parte superior
-    menu = vista_menu(page)
+        # Crear menú horizontal
+        menu = vista_menu(page)
 
-    # Campos de entrada para colores
-    global campo_color_fondo, campo_color_tematica, campo_color_letras, campo_nombre_gimnasio, selector_idioma
-    campo_color_fondo = ft.TextField(label="Color de Fondo", value=configuracion["color_fondo"])
-    campo_color_tematica = ft.TextField(label="Color de la Temática", value=configuracion["color_tematica"])
-    campo_color_letras = ft.TextField(label="Color de las Letras", value=configuracion["color_letras"])
+        # Cambiar tema dinámicamente
+        def cambiar_tema(e):
+            configuracion["tema"] = selector_tema.value
+            aplicar_tema(page, configuracion)  # Aplicar el nuevo tema
+            reconstruir_vista()  # Reconstruir la vista
 
-    # Campo para cambiar el nombre del gimnasio
-    campo_nombre_gimnasio = ft.TextField(
-        label="Nombre del Gimnasio",
-        value=configuracion["nombre_gimnasio"]
-    )
+        # Guardar nombre del gimnasio
+        def cambiar_nombre_gimnasio(e):
+            configuracion["nombre_gimnasio"] = campo_nombre_gimnasio.value
+            guardar_configuracion(configuracion)
+            page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"¡Nombre del gimnasio actualizado a '{configuracion['nombre_gimnasio']}'!", color=configuracion["color_letras"])
+            )
+            page.snack_bar.open = True
 
-    # Campo para cambiar el idioma
-    selector_idioma = ft.Dropdown(
-        label="Idioma",
-        options=[
-            ft.dropdown.Option("Español (es)"),
-            ft.dropdown.Option("Inglés (en)")
-        ],
-        value=configuracion["idioma"]
-    )
+        # Guardar idioma
+        def cambiar_idioma(e):
+            configuracion["idioma"] = selector_idioma.value
+            guardar_configuracion(configuracion)
+            page.snack_bar = ft.SnackBar(
+                content=ft.Text(f"Idioma cambiado a '{configuracion['idioma']}'!", color=configuracion["color_letras"])
+            )
+            page.snack_bar.open = True
 
-    # Tarjetas de configuración
-    tarjetas_configuraciones = ft.Column([
-        ft.Container(
+        # Campos y botones dinámicos
+        campo_nombre_gimnasio = ft.TextField(
+            label="Nombre del Gimnasio",
+            hint_text="Escribe aquí el nombre...",
+            value=configuracion["nombre_gimnasio"],
+            hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+            label_style=ft.TextStyle(color=configuracion["color_letras"]),
+            text_style=ft.TextStyle(color=configuracion["color_letras"]),
+            border_color=configuracion["color_letras"],
+            bgcolor=configuracion["color_tematica"]
+        )
+
+        selector_idioma = ft.Dropdown(
+            label="Idioma",
+            options=[
+                ft.dropdown.Option(key="Español", text="Español", style=ft.TextStyle(color=configuracion["color_letras"])),
+                ft.dropdown.Option(key="Inglés", text="Inglés", style=ft.TextStyle(color=configuracion["color_letras"])),
+            ],
+            value=configuracion["idioma"],
+            label_style=ft.TextStyle(color=configuracion["color_letras"]),
+            text_style=ft.TextStyle(color=configuracion["color_letras"]),  # Texto seleccionado dinámico
+            border_color=configuracion["color_letras"],
+            bgcolor=configuracion["color_tematica"]
+        )
+
+        selector_tema = ft.Dropdown(
+            label="Tema",
+            options=[
+                ft.dropdown.Option(key="Light", text="Tema Claro", style=ft.TextStyle(color=configuracion["color_letras"])),
+                ft.dropdown.Option(key="Dark", text="Tema Oscuro", style=ft.TextStyle(color=configuracion["color_letras"])),
+            ],
+            value=configuracion["tema"],
+            label_style=ft.TextStyle(color=configuracion["color_letras"]),
+            text_style=ft.TextStyle(color=configuracion["color_letras"]),  # Texto seleccionado dinámico
+            border_color=configuracion["color_letras"],
+            bgcolor=configuracion["color_tematica"]
+        )
+
+        boton_guardar_nombre = ft.ElevatedButton(
+            text="Guardar Nombre",
+            icon=ft.icons.SAVE,
+            style=ft.ButtonStyle(bgcolor=configuracion["color_tematica"], color=configuracion["color_letras"]),
+            on_click=cambiar_nombre_gimnasio
+        )
+
+        boton_guardar_idioma = ft.ElevatedButton(
+            text="Guardar Idioma",
+            icon=ft.icons.LANGUAGE,
+            style=ft.ButtonStyle(bgcolor=configuracion["color_tematica"], color=configuracion["color_letras"]),
+            on_click=cambiar_idioma
+        )
+
+        boton_guardar_tema = ft.ElevatedButton(
+            text="Guardar Tema",
+            icon=ft.icons.COLOR_LENS,
+            style=ft.ButtonStyle(bgcolor=configuracion["color_tematica"], color=configuracion["color_letras"]),
+            on_click=cambiar_tema
+        )
+
+        # Contenedores para cada configuración
+        contenedor_gimnasio = ft.Container(
+            content=ft.Column([
+                ft.Text("Configuración del Gimnasio", style="headlineMedium", color=configuracion["color_letras"]),
+                campo_nombre_gimnasio,
+                boton_guardar_nombre
+            ]),
+            padding=10,
+            border=ft.border.all(1),
+            border_radius=5,
+            bgcolor=configuracion["color_tematica"]
+        )
+
+        contenedor_idioma = ft.Container(
+            content=ft.Column([
+                ft.Text("Configuración del Idioma", style="headlineMedium", color=configuracion["color_letras"]),
+                selector_idioma,
+                boton_guardar_idioma
+            ]),
+            padding=10,
+            border=ft.border.all(1),
+            border_radius=5,
+            bgcolor=configuracion["color_tematica"]
+        )
+
+        contenedor_apariencia = ft.Container(
             content=ft.Column([
                 ft.Text("Apariencia", style="headlineMedium", color=configuracion["color_letras"]),
-                ft.Text("Configura los colores de la aplicación.", color=configuracion["color_letras"]),
-                ft.Row([
-                    campo_color_fondo,
-                    ft.IconButton(
-                        icon=ft.icons.PALETTE,
-                        tooltip="Seleccionar color de fondo",
-                        on_click=lambda e: abrir_paleta_color(page, "Color de Fondo", campo_color_fondo, "color_fondo")
-                    )
-                ]),
-                ft.Row([
-                    campo_color_tematica,
-                    ft.IconButton(
-                        icon=ft.icons.PALETTE,
-                        tooltip="Seleccionar color de temática",
-                        on_click=lambda e: abrir_paleta_color(page, "Color de Temática", campo_color_tematica, "color_tematica")
-                    )
-                ]),
-                ft.Row([
-                    campo_color_letras,
-                    ft.IconButton(
-                        icon=ft.icons.PALETTE,
-                        tooltip="Seleccionar color de letras",
-                        on_click=lambda e: abrir_paleta_color(page, "Color de Letras", campo_color_letras, "color_letras")
-                    )
-                ]),
-                ft.ElevatedButton(
-                    text="Aplicar Colores",
-                    icon=ft.icons.COLOR_LENS,
-                    on_click=lambda e: cambiar_colores(page)
-                )
+                selector_tema,
+                boton_guardar_tema
             ]),
-            padding=5,
+            padding=10,
             border=ft.border.all(1),
             border_radius=5,
-            margin=5
-        ),
-        ft.Container(
-            content=ft.Column([
-                ft.Text("Idioma", style="headlineMedium", color=configuracion["color_letras"]),
-                ft.Text("Selecciona el idioma de la aplicación.", color=configuracion["color_letras"]),
-                selector_idioma,
-                ft.ElevatedButton(
-                    text="Guardar Idioma",
-                    icon=ft.icons.LANGUAGE,
-                    on_click=lambda e: cambiar_idioma(page)
-                )
-            ]),
-            padding=5,
-            border=ft.border.all(1),
-            border_radius=5,
-            margin=5
-        ),
-        ft.Container(
-            content=ft.Column([
-                ft.Text("Nombre del Gimnasio", style="headlineMedium", color=configuracion["color_letras"]),
-                campo_nombre_gimnasio,
-                ft.ElevatedButton(
-                    text="Guardar Nombre",
-                    icon=ft.icons.SAVE,
-                    on_click=lambda e: cambiar_nombre_gimnasio(page)
-                )
-            ]),
-            padding=5,
-            border=ft.border.all(1),
-            border_radius=5,
-            margin=5
+            bgcolor=configuracion["color_tematica"]
         )
-    ], spacing=10)
 
-    # Contenedor desplazable
-    layout = ft.ListView(
-        controls=[
-            menu,
-            titulo,
-            tarjetas_configuraciones
-        ],
-        spacing=20,
-        expand=True
-    )
+        # Crear diseño completo
+        layout = ft.Column(
+            [
+                menu,
+                titulo,
+                contenedor_apariencia,
+                contenedor_gimnasio,
+                contenedor_idioma
+            ],
+            spacing=20,
+            expand=True,
+            scroll="auto"
+        )
 
-    # Añadir todo a la página
-    page.add(layout)
-    actualizar_tematica(page)
-    page.update()
+        # Redibujar la página
+        page.controls.clear()
+        page.add(layout)
+        page.update()
 
-
-# Cargar configuración inicial
-configuracion = cargar_configuracion()
+    reconstruir_vista()  # Construir vista inicial

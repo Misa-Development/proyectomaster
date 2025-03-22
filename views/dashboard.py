@@ -1,187 +1,174 @@
 import flet as ft
 import json
-from views.Menu import vista_menu  # Importamos el menú
+import sqlite3
+from views.Menu import vista_menu
 from views.add_client import vista_add_client
+from views.tablacliente import vista_tabla_clientes
+from views.verdetalle import vista_detalles_cliente
+from views.filtros import vista_filtros, open_custom_date_picker_modal
+from database.db import conectar_db
 
-# Cargar configuración desde config.json
-with open("config.json", "r") as config_file:
-    configuracion = json.load(config_file)
-
-# Obtener colores desde el archivo
-color_fondo = configuracion.get("color_fondo", "#FFFFFF")
-color_tematica = configuracion.get("color_tematica", "#FFFFFF")
-color_letras = configuracion.get("color_letras", "#000000")
-
-def vista_dashboard(page):
-    # Leer configuración actualizada de config.json
+# Función para cargar configuración desde config.json
+def cargar_configuracion():
     with open("config.json", "r") as config_file:
-        configuracion = json.load(config_file)
+        return json.load(config_file)
 
-    # Configura los colores del fondo y las letras
+# Función para obtener la lista de clientes desde la base de datos
+def obtener_clientes():
+    try:
+        conn = conectar_db()
+        conn.row_factory = sqlite3.Row  # Convertir resultados a objetos tipo Row
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT nombre, apellido, sexo, edad, apta_medica, enfermedades, fecha_inicio, fecha_vencimiento 
+            FROM clientes
+        ''')
+        # Convertir cada fila a un diccionario explícitamente
+        clientes = [dict(row) for row in cursor.fetchall()]
+    except sqlite3.Error as e:
+        print(f"Error al obtener clientes: {e}")
+        clientes = []  # Retornar lista vacía en caso de error
+    finally:
+        if conn:
+            conn.close()
+    return clientes
+def vista_dashboard(page):
+    # Cargar configuración del archivo JSON
+    configuracion = cargar_configuracion()
+
+    # Configuración de colores y tema
     color_fondo = configuracion.get("color_fondo", "#FFFFFF")
     color_letras = configuracion.get("color_letras", "#000000")
+    color_tematica = configuracion.get("color_tematica", "#FF5733")
+    nombre_gimnasio = configuracion.get("nombre_gimnasio", "Mi Gimnasio")
 
-    # Aplicar color de fondo
+    # Obtener la lista de clientes
+    clientes = obtener_clientes()
+
+    # Aplicar fondo y maximizar ventana
     page.bgcolor = color_fondo
     page.window_maximized = True
-    
-    # Crear una instancia de diálogo global
-    detalles_cliente_dialog = ft.AlertDialog(
-        modal=True,  # Asegura comportamiento de ventana emergente
-        open=False   # Inicialmente cerrado
-    )
-    page.dialog = detalles_cliente_dialog  # Lo asignamos a la página
 
-    # Función para cambiar a la vista de agregar cliente
-    def ir_agregar_cliente(e):
+    # Crear el encabezado con el nombre del gimnasio
+    menu = vista_menu(page)
+    header = ft.Container(
+        content=ft.Row(
+            controls=[
+                ft.Text(nombre_gimnasio, size=36, weight="bold", color=color_letras),
+                ft.IconButton(icon=ft.icons.SETTINGS, tooltip="Configuraciones", icon_color=color_tematica),
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+        ),
+        padding=20,
+        bgcolor=color_tematica,
+        border_radius=10,
+    )
+
+    # Tarjetas con métricas rápidas
+    metric_cards = ft.Row(
+        controls=[
+            ft.Card(
+                content=ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text("Clientes Activos", size=18, weight="bold", color=color_letras),
+                            ft.Text("125", size=42, weight="bold", color=color_tematica),
+                            ft.Icon(ft.icons.GROUP, size=28, color=color_tematica),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    bgcolor=ft.colors.BLUE,
+                    padding=5,
+                    border_radius=20,
+                    width=270,
+                    height=150,
+                ),
+                elevation=5,
+                margin=ft.margin.all(10),
+            ),
+            ft.Card(
+                content=ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text("Próximas Renovaciones", size=18, weight="bold", color=color_letras),
+                            ft.Text("20", size=42, weight="bold", color=color_tematica),
+                            ft.Icon(ft.icons.UPDATE, size=28, color=color_tematica),
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                    ),
+                    bgcolor=ft.colors.GREEN,
+                    padding=5,
+                    border_radius=20,
+                    width=270,
+                    height=150,
+                ),
+                elevation=5,
+                margin=ft.margin.all(10),
+            ),
+        ],
+        spacing=25,
+        alignment=ft.MainAxisAlignment.CENTER,
+    )
+
+    # Panel lateral para detalles del cliente
+    cliente_panel = ft.Container(
+        content=None,  # Inicialmente vacío
+        bgcolor=ft.colors.with_opacity(0.95, ft.colors.BLACK),
+        padding=20,
+        border_radius=15,
+        alignment=ft.alignment.center_left,
+        border=ft.border.all(2, ft.colors.WHITE),
+        width=0,  # Empieza invisible
+        animate_size=True,
+    )
+
+    # Función para mostrar detalles de un cliente
+    def mostrar_detalles_cliente(cliente):
+        print(f"Mostrando detalles para: {cliente}")  # Log de depuración
+        cliente_panel.content = vista_detalles_cliente(cliente, color_letras, color_tematica, cliente_panel)
+        cliente_panel.width = 350  # Ajustar tamaño del panel
+        cliente_panel.update()
+        print("Panel actualizado y visible")
+
+    # Crear la tabla de clientes
+    tabla_clientes = vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tematica)
+
+    # Crear los filtros utilizando los clientes
+    filtros = vista_filtros(
+        page,
+        color_letras,
+        open_custom_date_picker_modal,
+        tabla_clientes,
+        clientes,  # Se pasa la lista de clientes aquí
+    )
+
+    # Función para ir a la vista de agregar clientes
+    def ir_a_agregar_cliente(e):
         page.clean()  # Limpia la vista actual
         vista_add_client(page)
-        page.update()
 
-    # Función para buscar clientes
-    def buscar_cliente(e):
-        query = search_input.value.lower()
-        for fila in tabla_clientes.rows:
-            client_name = fila.cells[0].content.value.lower()
-            fila.visible = query in client_name
-        page.update()
-
-    # Función para cerrar el diálogo
-    def close_dialog(e):
-        detalles_cliente_dialog.open = False
-        page.update()
-
-    # Función para mostrar detalles del cliente
-    def mostrar_detalles(cliente):
-        print(f"Cliente seleccionado: {cliente}")  # Debug para verificar datos
-        # Actualizamos el contenido del diálogo con la información del cliente
-        detalles_cliente_dialog.title = ft.Text(f"Detalles del Cliente: {cliente['nombre']}")
-        detalles_cliente_dialog.content = ft.Column([
-            ft.Text(f"Nombre: {cliente['nombre']}"),
-            ft.Text(f"Apellido: {cliente['apellido']}"),
-            ft.Text(f"Sexo: {cliente['sexo']}"),
-            ft.Text(f"Edad: {cliente['edad']} años"),
-            ft.Text(f"Email: {cliente['email']}"),
-            ft.Text(f"Enfermedades: {cliente['enfermedades'] or 'Ninguna'}"),
-            ft.Text(f"Apta Médica: {'Sí' if cliente['apta_medica'] else 'No'}"),
-            ft.Text(f"Inicio de Membresía: {cliente['inicio_membresia']}"),
-            ft.Text(f"Vencimiento de Membresía: {cliente['fin_membresia']}")
-        ])
-        detalles_cliente_dialog.actions = [
-            ft.TextButton("Cerrar", on_click=close_dialog)
-        ]
-        detalles_cliente_dialog.open = True  # Abrimos el diálogo
-        page.update()  # Aseguramos que se reflejen los cambios en la página
-
-    # Datos de ejemplo
-    clientes = [
-        {"nombre": "Juan", "apellido": "Pérez", "sexo": "Masculino", "edad": 25,
-         "email": "juan.perez@gmail.com", "enfermedades": "Ninguna",
-         "apta_medica": True, "inicio_membresia": "01/01/2023", "fin_membresia": "31/12/2023"},
-        {"nombre": "María", "apellido": "Gómez", "sexo": "Femenino", "edad": 30,
-         "email": "maria.gomez@gmail.com", "enfermedades": "Asma",
-         "apta_medica": False, "inicio_membresia": "01/02/2023", "fin_membresia": "31/01/2024"}
-    ]
-
-    # Input de búsqueda
-    search_input = ft.TextField(
-        label="Buscar clientes...",
-        width=400,
-        on_change=buscar_cliente
-    )
-
-    # Tabla profesional
-    tabla_clientes = ft.DataTable(
-    columns=[
-        ft.DataColumn(ft.Container(ft.Text("Nombre", weight="bold"),
-                    alignment=ft.alignment.center, width=100)),
-        ft.DataColumn(ft.Container(ft.Text("Apellido", weight="bold"),
-                    alignment=ft.alignment.center, width=100)),
-        ft.DataColumn(ft.Container(ft.Text("Sexo", weight="bold"),
-                    alignment=ft.alignment.center, width=100)),
-        ft.DataColumn(ft.Container(ft.Text("Edad", weight="bold"),
-                    alignment=ft.alignment.center, width=100)),
-        ft.DataColumn(ft.Container(ft.Text("Vencimiento", weight="bold"),
-                    alignment=ft.alignment.center, width=100)),
-        ft.DataColumn(ft.Container(ft.Text("Acción", weight="bold"),
-                    alignment=ft.alignment.center, width=100))  # Elimina el Container aquí
-    ],
-    rows=[
-        ft.DataRow(
-            cells=[
-                ft.DataCell(ft.Container(
-                    ft.Text(cliente["nombre"]),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-                ft.DataCell(ft.Container(
-                    ft.Text(cliente["apellido"]),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-                ft.DataCell(ft.Container(
-                    ft.Text(cliente["sexo"]),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-                ft.DataCell(ft.Container(
-                    ft.Text(str(cliente["edad"])),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-                ft.DataCell(ft.Container(
-                    ft.Text(cliente["fin_membresia"]),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-                ft.DataCell(ft.Container(
-                    ft.IconButton(
-                        icon=ft.icons.VISIBILITY,
-                        tooltip="Ver Detalles",
-                        on_click=lambda e, c=cliente: mostrar_detalles(c)
-                    ),
-                    alignment=ft.alignment.center,
-                    width=100
-                )),
-            ]
-        )
-        for cliente in clientes
-    ]
-)
-
-    # Usar el menú definido en Menu.py
-    menu = vista_menu(page)
-
-    # Crear un header para "Clientes del Gimnasio" con el botón +
-    header_clientes = ft.Row(
-        controls=[
-            ft.Text("Clientes del Gimnasio", size=20, weight="bold", color=color_letras),
-            ft.IconButton(icon=ft.icons.ADD, tooltip="Agregar Cliente", on_click=ir_agregar_cliente)
-        ],
-        alignment=ft.MainAxisAlignment.CENTER,
-        spacing=10
+    # Botón para agregar clientes
+    btn_agregar_cliente = ft.ElevatedButton(
+        text="Agregar Cliente",
+        icon=ft.icons.PERSON_ADD,
+        style=ft.ButtonStyle(bgcolor=color_tematica, color=ft.colors.WHITE),
+        on_click=ir_a_agregar_cliente,
     )
 
     # Layout principal
-    layout = ft.Column([
-        menu,
-        ft.Container(
-            ft.Text("Nombre del Gimnasio", size=24, weight="bold", color=color_letras),
-            alignment=ft.alignment.center,
-            padding=10
-        ),
-        ft.Container(search_input, alignment=ft.alignment.center, padding=10),
-        ft.Container(header_clientes, alignment=ft.alignment.center, padding=5),
-        ft.Container(
+    layout = ft.Column(
+        controls=[
+            menu,
+            header,
+            metric_cards,
+            filtros,
+            btn_agregar_cliente,
             tabla_clientes,
-            expand=True,
-            alignment=ft.alignment.top_center,
-            padding=10,
-        )
-    ], spacing=10, expand=True)
+            cliente_panel,
+        ],
+        spacing=20,
+        scroll="auto",
+    )
 
     page.add(layout)
     page.update()
-
-if __name__ == "__main__":
-    ft.app(target=vista_dashboard)
