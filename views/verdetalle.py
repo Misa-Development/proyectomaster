@@ -7,14 +7,14 @@ def vista_detalles_cliente(cliente, color_letras, color_tematica, cliente_panel)
             ft.IconButton(  # Botón para cerrar el panel
                 icon=ft.icons.CLOSE,
                 tooltip="Cerrar",
-                icon_color=color_tematica,
+                icon_color=color_letras,
                 on_click=lambda e: ocultar_detalles_cliente(cliente_panel),
             ),
             ft.Text(
                 f"Detalles de {cliente['nombre']} {cliente['apellido']}",
                 size=24,
                 weight="bold",
-                color=color_tematica,
+                color=color_letras,
             ),
             ft.Text(f"Sexo: {cliente['sexo']}", size=16, color=color_letras),
             ft.Text(f"Apta Médica: {'Sí' if cliente['apta_medica'] else 'No'}", size=16, color=color_letras),

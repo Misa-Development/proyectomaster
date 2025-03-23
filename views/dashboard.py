@@ -108,11 +108,12 @@ def vista_dashboard(page):
     # Panel lateral dinámico (inicia cerrado)
     cliente_panel = ft.Container(
         content=None,
-        bgcolor=ft.colors.with_opacity(0.95, ft.colors.BLACK),
+        bgcolor=ft.colors.with_opacity(0.95,color=color_fondo),
         padding=20,
         border_radius=15,
         alignment=ft.alignment.center_right,
-        border=ft.border.all(2, ft.colors.WHITE),
+        border=ft.border.all(2,color=color_letras,
+),
         width=0,  # Inicialmente cerrado
         animate_size=True,  # Transiciones suaves
     )
