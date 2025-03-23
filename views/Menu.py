@@ -1,4 +1,3 @@
-# views/Menu.py
 import flet as ft
 
 def vista_menu(page):
@@ -6,6 +5,7 @@ def vista_menu(page):
     menu_items = [
         ft.PopupMenuItem(text="Dashboard", on_click=lambda e: page.go("/")),
         ft.PopupMenuItem(text="Configuraciones", on_click=lambda e: page.go("/configuraciones")),
+        ft.PopupMenuItem(text="Historial de Pagos", on_click=lambda e: page.go("/historial_pagos")),
     ]
 
     # Crea el menú desplegable
