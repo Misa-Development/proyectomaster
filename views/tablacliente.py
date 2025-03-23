@@ -15,7 +15,7 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
 
         # Consultar los clientes desde la base de datos
         cursor.execute('''
-            SELECT nombre, apellido, sexo, fecha_inicio, fecha_vencimiento, apta_medica 
+            SELECT nombre, apellido, sexo, edad, fecha_inicio, fecha_vencimiento, apta_medica 
             FROM clientes
         ''')
         clientes = cursor.fetchall()  # Lista de clientes como diccionarios
@@ -52,7 +52,7 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
                             icon=ft.icons.VISIBILITY,
                             tooltip="Ver Detalles",
                             icon_color=color_tematica,
-                            on_click=lambda e, c=cliente: mostrar_detalles_cliente(c)  # Pasa el cliente como diccionario
+                            on_click=lambda e, c=dict(cliente): mostrar_detalles_cliente(c)  # Convertir Row a diccionario
                         )
                     ),
                 ]

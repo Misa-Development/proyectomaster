@@ -2,7 +2,10 @@ import flet as ft
 import calendar
 import datetime
 import json
-
+import sqlite3
+import sqlite3
+from database.db import conectar_db
+from database.db import crear_tablas, insertar_clientes  # Si usas estas funciones directamente
 # Ruta del archivo de configuración
 CONFIG_FILE = "config.json"
 
@@ -262,32 +265,53 @@ def vista_add_client(page):
     )
 
     def submit_client(e):
-        client_data = {
-            "name": txt_name.value,
-            "surname": txt_surname.value,
-            "dni": txt_dni.value,
-            "age": txt_age.value,
-            "email": txt_email.value,
-            "gender": dropdown_gender.value,
-            "diseases": txt_diseases.value,
-            "medicalClearance": switch_medical.value,
-            "membershipStart": txt_membership_start.value,
-            "membershipEnd": txt_membership_end.value
-        }
-        print("Cliente registrado:", client_data)
-        # Limpiar campos
+        # Inicializar conexión
+        conn = None
+
+        try:
+            # Recolectar los datos del formulario
+            client_data = {
+                "nombre": txt_name.value,
+                "apellido": txt_surname.value,
+                "dni": txt_dni.value,
+                "email": txt_email.value,
+                "edad": int(txt_age.value) if txt_age.value.isdigit() else 0,
+                "sexo": dropdown_gender.value,
+                "apta_medica": switch_medical.value,
+                "enfermedades": txt_diseases.value,
+                "fecha_inicio": txt_membership_start.value,
+                "fecha_vencimiento": txt_membership_end.value
+            }
+
+            # Conexión a la base de datos e inserción de datos
+            conn = conectar_db()  # Usar tu función de conexión
+            cursor = conn.cursor()
+            cursor.execute('''
+                INSERT INTO clientes (nombre, apellido, dni, email, edad, sexo, apta_medica, enfermedades, fecha_inicio, fecha_vencimiento)
+                VALUES (:nombre, :apellido, :dni, :email, :edad, :sexo, :apta_medica, :enfermedades, :fecha_inicio, :fecha_vencimiento)
+            ''', client_data)
+            conn.commit()
+
+            print("Cliente registrado exitosamente:", client_data)
+        except sqlite3.Error as e:
+            print(f"Error al registrar el cliente: {e}")
+        finally:
+            # Cerrar la conexión en cualquier caso
+            if conn:
+                conn.close()
+
+        # Limpiar los campos del formulario después del registro
         txt_name.value = ""
         txt_surname.value = ""
         txt_dni.value = ""
-        txt_age.value = ""
         txt_email.value = ""
+        txt_age.value = ""
         dropdown_gender.value = ""
-        txt_diseases.value = ""
         switch_medical.value = False
+        txt_diseases.value = ""
         txt_membership_start.value = ""
         txt_membership_end.value = ""
         page.update()
-
     btn_submit = ft.ElevatedButton(
         text="Agregar Cliente",
         on_click=submit_client,
