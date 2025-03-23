@@ -17,45 +17,40 @@ def cargar_configuracion():
 def obtener_clientes():
     try:
         conn = conectar_db()
-        conn.row_factory = sqlite3.Row  # Convertir resultados a objetos tipo Row
+        conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         cursor.execute('''
             SELECT nombre, apellido, sexo, edad, apta_medica, enfermedades, fecha_inicio, fecha_vencimiento 
             FROM clientes
         ''')
-        # Convertir cada fila a un diccionario explícitamente
         clientes = [dict(row) for row in cursor.fetchall()]
     except sqlite3.Error as e:
         print(f"Error al obtener clientes: {e}")
-        clientes = []  # Retornar lista vacía en caso de error
+        clientes = []
     finally:
         if conn:
             conn.close()
     return clientes
-def vista_dashboard(page):
-    # Cargar configuración del archivo JSON
-    configuracion = cargar_configuracion()
 
-    # Configuración de colores y tema
+# Vista principal del Dashboard
+def vista_dashboard(page):
+    # Cargar configuración
+    configuracion = cargar_configuracion()
     color_fondo = configuracion.get("color_fondo", "#FFFFFF")
     color_letras = configuracion.get("color_letras", "#000000")
     color_tematica = configuracion.get("color_tematica", "#FF5733")
     nombre_gimnasio = configuracion.get("nombre_gimnasio", "Mi Gimnasio")
-
-    # Obtener la lista de clientes
     clientes = obtener_clientes()
 
-    # Aplicar fondo y maximizar ventana
     page.bgcolor = color_fondo
     page.window_maximized = True
 
-    # Crear el encabezado con el nombre del gimnasio
+    # Encabezado
     menu = vista_menu(page)
     header = ft.Container(
         content=ft.Row(
             controls=[
                 ft.Text(nombre_gimnasio, size=36, weight="bold", color=color_letras),
-                ft.IconButton(icon=ft.icons.SETTINGS, tooltip="Configuraciones", icon_color=color_tematica),
             ],
             alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
         ),
@@ -64,7 +59,7 @@ def vista_dashboard(page):
         border_radius=10,
     )
 
-    # Tarjetas con métricas rápidas
+    # Tarjetas de métricas rápidas
     metric_cards = ft.Row(
         controls=[
             ft.Card(
@@ -110,44 +105,41 @@ def vista_dashboard(page):
         alignment=ft.MainAxisAlignment.CENTER,
     )
 
-    # Panel lateral para detalles del cliente
+    # Panel lateral dinámico (inicia cerrado)
     cliente_panel = ft.Container(
-        content=None,  # Inicialmente vacío
+        content=None,
         bgcolor=ft.colors.with_opacity(0.95, ft.colors.BLACK),
         padding=20,
         border_radius=15,
-        alignment=ft.alignment.center_left,
+        alignment=ft.alignment.center_right,
         border=ft.border.all(2, ft.colors.WHITE),
-        width=0,  # Empieza invisible
-        animate_size=True,
+        width=0,  # Inicialmente cerrado
+        animate_size=True,  # Transiciones suaves
     )
 
-    # Función para mostrar detalles de un cliente
+    # Función para mostrar detalles del cliente (abre el panel)
     def mostrar_detalles_cliente(cliente):
-        print(f"Mostrando detalles para: {cliente}")  # Log de depuración
+        cliente_panel.width = 300  # Ancho fijo
         cliente_panel.content = vista_detalles_cliente(cliente, color_letras, color_tematica, cliente_panel)
-        cliente_panel.width = 350  # Ajustar tamaño del panel
         cliente_panel.update()
-        print("Panel actualizado y visible")
 
-    # Crear la tabla de clientes
+    # Tabla de clientes
     tabla_clientes = vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tematica)
 
-    # Crear los filtros utilizando los clientes
+    # Filtros de búsqueda
     filtros = vista_filtros(
         page,
         color_letras,
         open_custom_date_picker_modal,
         tabla_clientes,
-        clientes,  # Se pasa la lista de clientes aquí
+        clientes,
     )
 
-    # Función para ir a la vista de agregar clientes
+    # Botón para agregar cliente
     def ir_a_agregar_cliente(e):
-        page.clean()  # Limpia la vista actual
+        page.clean()
         vista_add_client(page)
 
-    # Botón para agregar clientes
     btn_agregar_cliente = ft.ElevatedButton(
         text="Agregar Cliente",
         icon=ft.icons.PERSON_ADD,
@@ -156,19 +148,28 @@ def vista_dashboard(page):
     )
 
     # Layout principal
-    layout = ft.Column(
+    layout = ft.Row(
         controls=[
-            menu,
-            header,
-            metric_cards,
-            filtros,
-            btn_agregar_cliente,
-            tabla_clientes,
-            cliente_panel,
+            ft.Container(  # Contenido principal
+                content=ft.Column(
+                    controls=[
+                        menu,
+                        header,
+                        metric_cards,
+                        filtros,
+                        btn_agregar_cliente,
+                        tabla_clientes,
+                    ],
+                    expand=True,  # Ajusta al espacio disponible
+                ),
+                expand=True,  # Este contenedor es flexible
+            ),
+            cliente_panel,  # Panel lateral dinámico
         ],
-        spacing=20,
-        scroll="auto",
+        spacing=0,
+        expand=True,
     )
 
+    # Añadir layout a la página
     page.add(layout)
     page.update()

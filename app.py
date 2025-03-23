@@ -1,8 +1,13 @@
 import flet as ft
 from views.dashboard import vista_dashboard
 from views.configuraciones import vista_configuraciones
+from database.db import crear_tablas, insertar_clientes
 
 def main(page):
+    # Inicializa la base de datos antes de cualquier interacción
+    crear_tablas()
+    insertar_clientes()
+
     page.title = "Gestor de Gimnasio"
     page.icon = "https://img.icons8.com/ios/452/dumbbell.png"
     page.horizontal_alignment = "center"
@@ -22,4 +27,3 @@ def main(page):
     cambiar_vista(page.route)
 
 ft.app(target=main)
-
