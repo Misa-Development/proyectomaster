@@ -35,6 +35,8 @@ def obtener_clientes():
 # Vista principal del Dashboard
 def vista_dashboard(page):
     # Cargar configuración
+    page.scroll = "none"  # Desactivar el scroll en el dashboard
+    page.clean()
     configuracion = cargar_configuracion()
     color_fondo = configuracion.get("color_fondo", "#FFFFFF")
     color_letras = configuracion.get("color_letras", "#000000")
@@ -67,18 +69,25 @@ def vista_dashboard(page):
                     content=ft.Column(
                         controls=[
                             ft.Text("Clientes Activos", size=18, weight="bold", color=color_letras),
-                            ft.Text("125", size=42, weight="bold", color=color_tematica),
-                            ft.Icon(ft.icons.GROUP, size=28, color=color_tematica),
+                            ft.Text("125", size=42, weight="bold", color=color_letras),
+                            ft.Icon(ft.icons.GROUP, size=18, color=color_letras),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
                     bgcolor=ft.colors.BLUE,
-                    padding=5,
-                    border_radius=20,
+                    padding=17
+                    ,
+                    border_radius=10,
                     width=270,
                     height=150,
+                    border=ft.border.all(  # Define el color del borde
+                        color="#172963",
+                        width=2,  # Grosor del borde
+                    ),
+
                 ),
                 elevation=5,
+                shadow_color=ft.colors.BLUE,
                 margin=ft.margin.all(10),
             ),
             ft.Card(
@@ -86,18 +95,24 @@ def vista_dashboard(page):
                     content=ft.Column(
                         controls=[
                             ft.Text("Próximas Renovaciones", size=18, weight="bold", color=color_letras),
-                            ft.Text("20", size=42, weight="bold", color=color_tematica),
-                            ft.Icon(ft.icons.UPDATE, size=28, color=color_tematica),
+                            ft.Text("20", size=42, weight="bold", color=color_letras),
+                            ft.Icon(ft.icons.UPDATE, size=18, color=color_letras),
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                     ),
                     bgcolor=ft.colors.GREEN,
-                    padding=5,
-                    border_radius=20,
+                    padding=17,
+                    border_radius=10,
                     width=270,
                     height=150,
+                    border=ft.border.all(  # Define el color del borde
+                        color="#2e6317",
+                        width=2,  # Grosor del borde
+                    ),
+                    
                 ),
                 elevation=5,
+                shadow_color=ft.colors.GREEN,
                 margin=ft.margin.all(10),
             ),
         ],
@@ -115,7 +130,8 @@ def vista_dashboard(page):
         border=ft.border.all(2,color=color_letras,
 ),
         width=0,  # Inicialmente cerrado
-        animate_size=True,  # Transiciones suaves
+        animate_size=True,# Transiciones suaves
+        animate=ft.Animation(duration=300, curve=ft.AnimationCurve.EASE_IN_OUT),
     )
 
     # Función para mostrar detalles del cliente (abre el panel)
@@ -136,17 +152,7 @@ def vista_dashboard(page):
         clientes,
     )
 
-    # Botón para agregar cliente
-    def ir_a_agregar_cliente(e):
-        page.clean()
-        vista_add_client(page)
 
-    btn_agregar_cliente = ft.ElevatedButton(
-        text="Agregar Cliente",
-        icon=ft.icons.PERSON_ADD,
-        style=ft.ButtonStyle(bgcolor=color_tematica, color=ft.colors.WHITE),
-        on_click=ir_a_agregar_cliente,
-    )
 
     # Layout principal
     layout = ft.Row(
@@ -158,7 +164,6 @@ def vista_dashboard(page):
                         header,
                         metric_cards,
                         filtros,
-                        btn_agregar_cliente,
                         tabla_clientes,
                     ],
                     expand=True,  # Ajusta al espacio disponible

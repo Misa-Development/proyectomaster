@@ -51,7 +51,7 @@ def aplicar_tema(page, configuracion):
         configuracion["color_tematica"] = "#D3D3D3"
         configuracion["color_letras"] = "#000000"
     elif tema == "Dark":  # Tema oscuro
-        configuracion["color_fondo"] = "#000000"
+        configuracion["color_fondo"] = "#0d1117"
         configuracion["color_tematica"] = "#303030"
         configuracion["color_letras"] = "#FFFFFF"
 

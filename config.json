@@ -1,8 +1,8 @@
 {
-    "color_fondo": "#FFFFFF",
-    "color_tematica": "#D3D3D3",
-    "color_letras": "#000000",
-    "tema": "Light",
+    "color_fondo": "#0d1117",
+    "color_tematica": "#303030",
+    "color_letras": "#FFFFFF",
+    "tema": "Dark",
     "nombre_gimnasio": "ESPARTA-GYM",
     "idioma": "Espa\u00f1ol"
 }
