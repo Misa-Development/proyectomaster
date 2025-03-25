@@ -36,37 +36,48 @@ def vista_add_client(page):
         label="Nombre",
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     txt_surname = ft.TextField(
         label="Apellido",
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     txt_dni = ft.TextField(
         label="N° Documento",
         keyboard_type=ft.KeyboardType.NUMBER,
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     txt_age = ft.TextField(
         label="Edad",
         keyboard_type=ft.KeyboardType.NUMBER,
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     txt_email = ft.TextField(
         label="Email",
         keyboard_type=ft.KeyboardType.EMAIL,
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     dropdown_gender = ft.Dropdown(
-        label="Seleccione el Sexo",
+        label="Seleccione el Sexo",        
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
         options=[
             ft.dropdown.Option(key="Male", text="Masculino"),
             ft.dropdown.Option(key="Female", text="Femenino"),
@@ -75,13 +86,16 @@ def vista_add_client(page):
         value="",
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_letras"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"])
     )
     txt_diseases = ft.TextField(
         label="Enfermedades",
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"])
     )
     switch_medical = ft.Switch(
         label="Apta Médica",
@@ -107,7 +121,9 @@ def vista_add_client(page):
         read_only=True,
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"])
     )
     btn_pick_start = ft.IconButton(
         icon=ft.icons.CALENDAR_MONTH,
@@ -123,7 +139,9 @@ def vista_add_client(page):
         read_only=True,
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_tematica"]
+        bgcolor=configuracion["color_tematica"],
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"])
     )
     btn_pick_end = ft.IconButton(
         icon=ft.icons.CALENDAR_MONTH,

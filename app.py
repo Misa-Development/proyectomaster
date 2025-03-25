@@ -3,7 +3,9 @@ from views.historialpagos import vista_historial_pagos
 from views.add_client import vista_add_client
 from views.dashboard import vista_dashboard
 from views.configuraciones import vista_configuraciones
+from database.db import crear_tablas
 
+crear_tablas()
 def main(page: ft.Page):
     page.title = "Gestión de Gimnasio"
     page.window_maximized = True

@@ -1,38 +1,26 @@
 import flet as ft
+import sqlite3
+from database.db import conectar_db
+from views.custom_date_picker import open_custom_date_picker_modal
 
-# Función para manejar el popup del calendario
-def open_custom_date_picker_modal(page, initial_date, on_date_selected):
-    def cerrar_dialogo(e):
-        page.dialog.open = False  # Cierra el popup
-        page.update()
+# Vista para los filtros conectados
+def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_scroll, clientes, mostrar_detalles_cliente):
+    tabla_clientes = tabla_con_scroll.controls[0]  # Primer control del ListView
 
-    date_picker = ft.DatePicker(
-        value=initial_date,  # Fecha inicial
-        on_change=lambda e: on_date_selected(e.control.value)  # Evento para seleccionar la fecha
-    )
-
-    return ft.AlertDialog(
-        modal=True,
-        title=ft.Text("Selecciona una fecha"),
-        content=date_picker,
-        actions=[
-            ft.TextButton("Cerrar", on_click=cerrar_dialogo)  # Botón para cerrar el modal
-        ]
-    )
-
-# Vista para los filtros
-def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_clientes, clientes):
-    # Componentes del filtro
+    # Campo de búsqueda
     search_input = ft.TextField(
-        label="Buscar clientes",
+        label="Buscar clientes por nombre",
         prefix_icon=ft.icons.SEARCH,
         width=300,
         text_style=ft.TextStyle(color=color_letras),
         border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
     )
 
+    # Filtro por género
     filtro_genero = ft.Dropdown(
-        label="Género",
+        label="Filtrar por género",
         options=[
             ft.dropdown.Option("Todos"),
             ft.dropdown.Option("Masculino"),
@@ -41,10 +29,14 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_clien
         value="Todos",
         text_style=ft.TextStyle(color=color_letras),
         border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
+        
     )
 
+    # Filtro por aptitud médica
     filtro_apta_medica = ft.Dropdown(
-        label="Apta Médica",
+        label="Filtrar por apta médica",
         options=[
             ft.dropdown.Option("Todos"),
             ft.dropdown.Option("Sí"),
@@ -53,73 +45,141 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_clien
         value="Todos",
         text_style=ft.TextStyle(color=color_letras),
         border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
     )
 
+    # Campos de fechas
     txt_fecha_desde = ft.TextField(
-        label="Desde",
+        label="Inicio de membresía desde",
         read_only=True,
         width=150,
         text_style=ft.TextStyle(color=color_letras),
         border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
     )
-
     btn_fecha_desde = ft.IconButton(
         icon=ft.icons.CALENDAR_MONTH,
-        tooltip="Seleccionar Fecha Desde",
-        on_click=lambda e: show_calendar(txt_fecha_desde, page, open_custom_date_picker_modal),
+        tooltip="Seleccionar fecha de inicio desde",
+        on_click=lambda e: open_calendar(txt_fecha_desde, page, open_custom_date_picker_modal),
     )
 
     txt_fecha_hasta = ft.TextField(
-        label="Hasta",
+        label="Inicio de membresía hasta",
         read_only=True,
         width=150,
         text_style=ft.TextStyle(color=color_letras),
         border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
     )
-
     btn_fecha_hasta = ft.IconButton(
         icon=ft.icons.CALENDAR_MONTH,
-        tooltip="Seleccionar Fecha Hasta",
-        on_click=lambda e: show_calendar(txt_fecha_hasta, page, open_custom_date_picker_modal),
+        tooltip="Seleccionar fecha de inicio hasta",
+        on_click=lambda e: open_calendar(txt_fecha_hasta, page, open_custom_date_picker_modal),
     )
 
     # Función para mostrar el calendario
-    def show_calendar(field, page, open_custom_date_picker_modal):
+    def open_calendar(text_field, page, open_custom_date_picker_modal):
         def on_date_selected(selected_date):
-            if selected_date:
-                field.value = selected_date.strftime("%d/%m/%Y")  # Actualiza el campo con la fecha seleccionada
-                page.dialog.open = False
-                page.update()
+            text_field.value = selected_date.strftime("%Y-%m-%d")  # Actualiza el campo con la fecha seleccionada
+            if page.overlay:
+                page.overlay.pop()  # Cierra el popup después de seleccionar la fecha
+            page.update()
 
         overlay = open_custom_date_picker_modal(page, None, on_date_selected)
-        page.dialog = overlay
-        page.dialog.open = True
-        page.overlay.append(overlay)  # Agrega el modal al layout
+        page.overlay.append(overlay)  # Añade el popup al overlay de la página
         page.update()
 
-    # Función para buscar clientes
-    def buscar_cliente(e):
+    # Función para aplicar filtros
+    def buscar_cliente():
         query = search_input.value.lower()
-        for fila, cliente in zip(tabla_clientes.rows, clientes):
-            client_name = cliente.get("nombre", "").lower()  # Usa `.get()` porque `cliente` es un diccionario
-            visible = query in client_name
-            fila.visible = visible
-        page.update()
-        # Asociar el callback a los eventos de cambio en los filtros
-        search_input.on_change = buscar_cliente
-        filtro_genero.on_change = buscar_cliente
-        filtro_apta_medica.on_change = buscar_cliente
+        genero = filtro_genero.value
+        apta_medica = filtro_apta_medica.value
+        fecha_desde = txt_fecha_desde.value
+        fecha_hasta = txt_fecha_hasta.value
 
-    # Estructura del layout de filtros
-    filtros = ft.Row(
+        # Conectar a la base de datos y aplicar los filtros
+        try:
+            conn = conectar_db()
+            cursor = conn.cursor()
+
+            # Construir la consulta SQL dinámicamente
+            query_sql = "SELECT * FROM clientes WHERE 1=1"
+            params = []
+
+            if query:
+                query_sql += " AND LOWER(nombre) LIKE ?"
+                params.append(f"%{query}%")
+
+            if genero != "Todos":
+                query_sql += " AND (LOWER(sexo) = ? OR LOWER(sexo) = ?)"
+                if genero.lower() == "masculino" or genero.lower() == "male":
+                    params.append("masculino")
+                    params.append("male")
+                elif genero.lower() == "femenino" or genero.lower() == "female":
+                    params.append("femenino")
+                    params.append("female")
+
+            if apta_medica == "Sí":
+                query_sql += " AND apta_medica = ?"
+                params.append(True)
+            elif apta_medica == "No":
+                query_sql += " AND apta_medica = ?"
+                params.append(False)
+
+            if fecha_desde:
+                query_sql += " AND fecha_inicio >= ?"
+                params.append(fecha_desde)
+
+            if fecha_hasta:
+                query_sql += " AND fecha_inicio <= ?"
+                params.append(fecha_hasta)
+
+            cursor.execute(query_sql, params)
+            clientes_filtrados = cursor.fetchall()
+
+            # Actualizar las filas del DataTable
+            # Actualizar las filas del DataTable
+            tabla_clientes.rows.clear()
+            for cliente in clientes_filtrados:
+                tabla_clientes.rows.append(
+                    ft.DataRow(cells=[
+                        ft.DataCell(ft.Text(cliente["nombre"], color=color_letras)),
+                        ft.DataCell(ft.Text(cliente["apellido"], color=color_letras)),
+                        ft.DataCell(ft.Text(cliente["sexo"], color=color_letras)),
+                        ft.DataCell(ft.Text(cliente["fecha_inicio"], color=color_letras)),
+                        ft.DataCell(ft.Text(cliente["fecha_vencimiento"], color=color_letras)),
+                        ft.DataCell(ft.Text("Sí" if cliente["apta_medica"] else "No", color=color_letras)),
+                        ft.DataCell(
+                            ft.IconButton(
+                                icon=ft.icons.VISIBILITY,
+                                tooltip="Ver Detalles",
+                                on_click=lambda e, c=dict(cliente): mostrar_detalles_cliente(c)
+                            )
+                        ),
+                    ])
+    )
+            page.update()
+        except sqlite3.Error as e:
+            print(f"Error al filtrar clientes: {e}")
+        finally:
+            if conn:
+                conn.close()
+
+    # Asociar eventos de cambio a la función de búsqueda
+    search_input.on_change = lambda e: buscar_cliente()
+    filtro_genero.on_change = lambda e: buscar_cliente()
+    filtro_apta_medica.on_change = lambda e: buscar_cliente()
+
+    # Diseño de los filtros
+    filtros = ft.Column(
         controls=[
-            search_input,
-            filtro_genero,
-            txt_fecha_desde, btn_fecha_desde,
-            txt_fecha_hasta, btn_fecha_hasta,
-            filtro_apta_medica,
+            ft.Row([search_input, filtro_genero, filtro_apta_medica], spacing=10),
+            ft.Row([txt_fecha_desde, btn_fecha_desde, txt_fecha_hasta, btn_fecha_hasta], spacing=10),
         ],
-        spacing=10,
+        spacing=20
     )
 
     return filtros

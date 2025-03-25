@@ -2,7 +2,6 @@ import flet as ft
 import json
 import sqlite3
 from views.Menu import vista_menu
-from views.add_client import vista_add_client
 from views.tablacliente import vista_tabla_clientes
 from views.verdetalle import vista_detalles_cliente
 from views.filtros import vista_filtros, open_custom_date_picker_modal
@@ -136,6 +135,7 @@ def vista_dashboard(page):
 
     # Función para mostrar detalles del cliente (abre el panel)
     def mostrar_detalles_cliente(cliente):
+        cliente_panel.margin= 30
         cliente_panel.width = 300  # Ancho fijo
         cliente_panel.content = vista_detalles_cliente(cliente, color_letras, color_tematica, cliente_panel)
         cliente_panel.update()
@@ -150,6 +150,7 @@ def vista_dashboard(page):
         open_custom_date_picker_modal,
         tabla_clientes,
         clientes,
+        mostrar_detalles_cliente,
     )
 
 
