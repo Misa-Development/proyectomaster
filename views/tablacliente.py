@@ -60,4 +60,11 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
             for cliente in clientes  # Itera sobre los clientes obtenidos
         ]
     )
-    return tabla
+
+    # Envolver la tabla en un ListView con scroll
+    tabla_con_scroll = ft.ListView(
+        controls=[tabla],
+        expand=True  # Permite que la tabla ocupe todo el espacio disponible con scroll
+    )
+
+    return tabla_con_scroll

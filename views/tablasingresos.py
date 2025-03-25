@@ -1,11 +1,15 @@
 import flet as ft
 from database.db import conectar_db, obtener_ingresos, obtener_historial_pagos
+
 # Vista de tabla clientes
 def vista_tabla_clientes(page, color_letras, color_tematica):
     try:
         conn = conectar_db()
         cursor = conn.cursor()
-        cursor.execute('''SELECT nombre, apellido, sexo, edad, fecha_inicio, fecha_vencimiento, apta_medica FROM clientes''')
+        cursor.execute('''
+            SELECT nombre, apellido, sexo, edad, fecha_inicio, fecha_vencimiento, apta_medica 
+            FROM clientes
+        ''')
         clientes = cursor.fetchall()
     except Exception as e:
         print(f"Error: {e}")
@@ -84,26 +88,33 @@ def vista_tabla_ingresos(page, color_letras, color_tematica):
         ]
     )
 
+# Configuración principal
 def main(page: ft.Page):
     page.title = "Gestión de Gimnasio"
     page.theme_mode = ft.ThemeMode.LIGHT
-    page.scroll = "auto"
+    page.scroll = "auto"  # Habilitar el scroll automático en la página principal
     color_letras = "black"
     color_tematica = "blue"
 
-    # Componentes de la interfaz
-    page.add(
-        ft.Text("Tablas de Gestión", size=24, weight="bold", color=color_tematica),
-        ft.Divider(),
-        ft.Text("Clientes", size=18, weight="bold", color=color_tematica),
-        vista_tabla_clientes(page, color_letras, color_tematica),
-        ft.Divider(),
-        ft.Text("Historial de Pagos", size=18, weight="bold", color=color_tematica),
-        vista_tabla_historial_pagos(page, color_letras, color_tematica),
-        ft.Divider(),
-        ft.Text("Ingresos", size=18, weight="bold", color=color_tematica),
-        vista_tabla_ingresos(page, color_letras, color_tematica),
+    # Contenedor con todas las tablas
+    contenido = ft.Column(
+        controls=[
+            ft.Text("Tablas de Gestión", size=24, weight="bold", color=color_tematica),
+            ft.Divider(),
+            ft.Text("Clientes", size=18, weight="bold", color=color_tematica),
+            vista_tabla_clientes(page, color_letras, color_tematica),
+            ft.Divider(),
+            ft.Text("Historial de Pagos", size=18, weight="bold", color=color_tematica),
+            vista_tabla_historial_pagos(page, color_letras, color_tematica),
+            ft.Divider(),
+            ft.Text("Ingresos", size=18, weight="bold", color=color_tematica),
+            vista_tabla_ingresos(page, color_letras, color_tematica),
+        ],
+        expand=True  # Ajustar las tablas al espacio disponible
     )
+
+    # Agregar el contenido al dashboard
+    page.add(contenido)
 
 if __name__ == "__main__":
     ft.app(target=main)

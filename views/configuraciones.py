@@ -15,7 +15,7 @@ def cargar_configuracion():
         # Configuración predeterminada si el archivo no existe
         config = {
             "color_fondo": "#FFFFFF",
-            "color_tematica": "#E8E8E8",
+            "color_tematica": "#FF5733",
             "color_letras": "#000000",
             "tema": "Light",  # Tema por defecto
             "nombre_gimnasio": "Mi Gimnasio",
@@ -27,7 +27,7 @@ def cargar_configuracion():
     # Verificar claves necesarias y completarlas si faltan
     claves_necesarias = {
         "color_fondo": "#FFFFFF",
-        "color_tematica": "#E8E8E8",
+        "color_tematica": "#FF5733",
         "color_letras": "#000000",
         "tema": "Light",
         "nombre_gimnasio": "Mi Gimnasio",
@@ -51,7 +51,7 @@ def aplicar_tema(page, configuracion):
         configuracion["color_tematica"] = "#D3D3D3"
         configuracion["color_letras"] = "#000000"
     elif tema == "Dark":  # Tema oscuro
-        configuracion["color_fondo"] = "#000000"
+        configuracion["color_fondo"] = "#0d1117"
         configuracion["color_tematica"] = "#303030"
         configuracion["color_letras"] = "#FFFFFF"
 

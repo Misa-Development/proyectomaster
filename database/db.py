@@ -67,10 +67,7 @@ def crear_tablas():
 
 # Función para insertar datos de prueba en la tabla clientes
 def insertar_clientes():
-    clientes = [
-        {"nombre": "Juan", "apellido": "Pérez", "dni": "12345678", "email": "juan.perez@gmail.com", "edad": 25, "sexo": "Masculino", "apta_medica": True, "enfermedades": "Ninguna", "fecha_inicio": "2023-01-01", "fecha_vencimiento": "2024-01-01"},
-        {"nombre": "María", "apellido": "Gómez", "dni": "23456789", "email": "maria.gomez@gmail.com", "edad": 30, "sexo": "Femenino", "apta_medica": False, "enfermedades": "Asma", "fecha_inicio": "2023-02-15", "fecha_vencimiento": "2024-02-15"},
-    ]
+    clientes = []
     try:
         conn = conectar_db()
         cursor = conn.cursor()
