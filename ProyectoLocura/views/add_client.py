@@ -77,17 +77,16 @@ def vista_add_client(page):
     )
     dropdown_gender = ft.Dropdown(
         label="Seleccione el Sexo",        
-        label_style=ft.TextStyle(color=configuracion["color_letras"]),
         options=[
             ft.dropdown.Option(key="Male", text="Masculino"),
             ft.dropdown.Option(key="Female", text="Femenino"),
             ft.dropdown.Option(key="Other", text="Otro"),
         ],
-        value="",
+        value="Todos",
         text_style=ft.TextStyle(color=configuracion["color_letras"]),
         border_color=configuracion["color_letras"],
-        bgcolor=configuracion["color_letras"],
-        hint_style=ft.TextStyle(color=configuracion["color_letras"])
+        hint_style=ft.TextStyle(color=configuracion["color_letras"]),
+        label_style=ft.TextStyle(color=configuracion["color_letras"]),
     )
     txt_diseases = ft.TextField(
         label="Enfermedades",
