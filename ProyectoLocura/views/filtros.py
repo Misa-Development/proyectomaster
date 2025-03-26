@@ -31,7 +31,6 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
         border_color=color_letras,
         hint_style=ft.TextStyle(color=color_letras),
         label_style=ft.TextStyle(color=color_letras),
-        
     )
 
     # Filtro por aptitud médica
@@ -41,6 +40,21 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
             ft.dropdown.Option("Todos"),
             ft.dropdown.Option("Sí"),
             ft.dropdown.Option("No"),
+        ],
+        value="Todos",
+        text_style=ft.TextStyle(color=color_letras),
+        border_color=color_letras,
+        hint_style=ft.TextStyle(color=color_letras),
+        label_style=ft.TextStyle(color=color_letras),
+    )
+
+    # Filtro por estado (Activo/Inactivo)
+    filtro_estado = ft.Dropdown(
+        label="Filtrar por estado",
+        options=[
+            ft.dropdown.Option("Todos"),
+            ft.dropdown.Option("Activo"),
+            ft.dropdown.Option("Inactivo"),
         ],
         value="Todos",
         text_style=ft.TextStyle(color=color_letras),
@@ -97,6 +111,7 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
         query = search_input.value.lower()
         genero = filtro_genero.value
         apta_medica = filtro_apta_medica.value
+        estado = filtro_estado.value
         fecha_desde = txt_fecha_desde.value
         fecha_hasta = txt_fecha_hasta.value
 
@@ -106,7 +121,14 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
             cursor = conn.cursor()
 
             # Construir la consulta SQL dinámicamente
-            query_sql = "SELECT * FROM clientes WHERE 1=1"
+            query_sql = '''
+                SELECT *, 
+                CASE 
+                    WHEN fecha_vencimiento >= DATE('now') THEN 'Activo'
+                    ELSE 'Inactivo'
+                END AS estado
+                FROM clientes WHERE 1=1
+            '''
             params = []
 
             if query:
@@ -114,13 +136,8 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
                 params.append(f"%{query}%")
 
             if genero != "Todos":
-                query_sql += " AND (LOWER(sexo) = ? OR LOWER(sexo) = ?)"
-                if genero.lower() == "masculino" or genero.lower() == "male":
-                    params.append("masculino")
-                    params.append("male")
-                elif genero.lower() == "femenino" or genero.lower() == "female":
-                    params.append("femenino")
-                    params.append("female")
+                query_sql += " AND LOWER(sexo) = ?"
+                params.append(genero.lower())
 
             if apta_medica == "Sí":
                 query_sql += " AND apta_medica = ?"
@@ -128,6 +145,10 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
             elif apta_medica == "No":
                 query_sql += " AND apta_medica = ?"
                 params.append(False)
+
+            if estado != "Todos":
+                query_sql += " AND estado = ?"
+                params.append(estado)
 
             if fecha_desde:
                 query_sql += " AND fecha_inicio >= ?"
@@ -141,7 +162,6 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
             clientes_filtrados = cursor.fetchall()
 
             # Actualizar las filas del DataTable
-            # Actualizar las filas del DataTable
             tabla_clientes.rows.clear()
             for cliente in clientes_filtrados:
                 tabla_clientes.rows.append(
@@ -152,6 +172,7 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
                         ft.DataCell(ft.Text(cliente["fecha_inicio"], color=color_letras)),
                         ft.DataCell(ft.Text(cliente["fecha_vencimiento"], color=color_letras)),
                         ft.DataCell(ft.Text("Sí" if cliente["apta_medica"] else "No", color=color_letras)),
+                        ft.DataCell(ft.Text(cliente["estado"], color=color_letras)),
                         ft.DataCell(
                             ft.IconButton(
                                 icon=ft.icons.VISIBILITY,
@@ -160,7 +181,7 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
                             )
                         ),
                     ])
-    )
+                )
             page.update()
         except sqlite3.Error as e:
             print(f"Error al filtrar clientes: {e}")
@@ -172,11 +193,12 @@ def vista_filtros(page, color_letras, open_custom_date_picker_modal, tabla_con_s
     search_input.on_change = lambda e: buscar_cliente()
     filtro_genero.on_change = lambda e: buscar_cliente()
     filtro_apta_medica.on_change = lambda e: buscar_cliente()
+    filtro_estado.on_change = lambda e: buscar_cliente()
 
     # Diseño de los filtros
     filtros = ft.Column(
         controls=[
-            ft.Row([search_input, filtro_genero, filtro_apta_medica], spacing=10),
+            ft.Row([search_input, filtro_genero, filtro_apta_medica, filtro_estado], spacing=10),
             ft.Row([txt_fecha_desde, btn_fecha_desde, txt_fecha_hasta, btn_fecha_hasta], spacing=10),
         ],
         spacing=20

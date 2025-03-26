@@ -15,7 +15,11 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
 
         # Consultar los clientes desde la base de datos
         cursor.execute('''
-            SELECT nombre, apellido, sexo, edad, fecha_inicio, fecha_vencimiento, apta_medica 
+            SELECT nombre, apellido, sexo, edad, fecha_inicio, fecha_vencimiento, apta_medica,
+                   CASE 
+                       WHEN fecha_vencimiento >= DATE('now') THEN 'Activo'
+                       ELSE 'Inactivo'
+                   END AS estado
             FROM clientes
         ''')
         clientes = cursor.fetchall()  # Lista de clientes como diccionarios
@@ -36,6 +40,7 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
             ft.DataColumn(ft.Text("Fecha de Inicio", weight="bold", color=color_letras)),
             ft.DataColumn(ft.Text("Fecha de Vencimiento", weight="bold", color=color_letras)),
             ft.DataColumn(ft.Text("Apta Médica", weight="bold", color=color_letras)),
+            ft.DataColumn(ft.Text("Activo/Inactivo", weight="bold", color=color_letras)),
             ft.DataColumn(ft.Text("Acción", weight="bold", color=color_letras))
         ],
         rows=[
@@ -47,6 +52,7 @@ def vista_tabla_clientes(page, mostrar_detalles_cliente, color_letras, color_tem
                     ft.DataCell(ft.Text(cliente["fecha_inicio"], color=color_letras)),
                     ft.DataCell(ft.Text(cliente["fecha_vencimiento"], color=color_letras)),
                     ft.DataCell(ft.Text("Sí" if cliente["apta_medica"] else "No", color=color_letras)),
+                    ft.DataCell(ft.Text(cliente["estado"], color=color_letras)),
                     ft.DataCell(
                         ft.IconButton(
                             icon=ft.icons.VISIBILITY,
