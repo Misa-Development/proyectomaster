@@ -136,7 +136,7 @@ def vista_dashboard(page):
     # Función para mostrar detalles del cliente (abre el panel)
     def mostrar_detalles_cliente(cliente):
         cliente_panel.margin= 30
-        cliente_panel.width = 300  # Ancho fijo
+        cliente_panel.width = 350  # Ancho fijo
         cliente_panel.content = vista_detalles_cliente(cliente, color_letras, color_tematica, cliente_panel)
         cliente_panel.update()
 
